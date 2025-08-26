@@ -1171,6 +1171,8 @@
                 if (inner) {
                     inner.style.transformStyle = 'preserve-3d';
                     inner.style.transition = 'transform 0.5s';
+                    // 增加内边距以扩大实际触控区域（对移动端友好）
+                    inner.style.padding = '12px';
                 }
                 if (frontFace) {
                     frontFace.style.backfaceVisibility = 'hidden';
@@ -1189,8 +1191,35 @@
                     backFace.style.position = 'absolute';
                     backFace.style.inset = '0';
                 }
-                
-                // 卡片点击事件
+
+                // 扩大父元素的触控大小并确保盒模型包含 padding
+                card.style.padding = '12px';
+                card.style.boxSizing = 'border-box';
+                card.style.touchAction = 'manipulation';
+                card.style.margin = '4px';
+
+                // 添加一个透明的触控层（button），覆盖在视觉卡片上以扩大命中区域
+                const touchLayer = document.createElement('button');
+                touchLayer.type = 'button';
+                touchLayer.className = 'card-touch-layer';
+                touchLayer.style.position = 'absolute';
+                touchLayer.style.inset = '0';
+                touchLayer.style.background = 'transparent';
+                touchLayer.style.border = 'none';
+                touchLayer.style.padding = '12px';
+                touchLayer.style.cursor = 'pointer';
+                touchLayer.style.zIndex = '60';
+                touchLayer.style.borderRadius = '8px';
+                touchLayer.style.touchAction = 'manipulation';
+
+                // 触控/点击事件通过触控层触发翻牌，避免事件穿透
+                touchLayer.addEventListener('click', (e) => { e.stopPropagation(); flipCard(card, i); });
+                touchLayer.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); flipCard(card, i); }, { passive: false });
+
+                // 将触控层追加到卡片上
+                card.appendChild(touchLayer);
+
+                // 保留对卡片本身的点击监听（作为降级机制）
                 card.addEventListener('click', () => flipCard(card, i));
                 
                 memoryBoard.appendChild(card);
